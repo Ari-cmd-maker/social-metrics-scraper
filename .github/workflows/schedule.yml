@@ -2,8 +2,8 @@ name: Daily IG Scrape
 
 on:
   schedule:
-    - cron:  '0 6 * * *'   # every day at 06:00 UTC
-  workflow_dispatch:      # also allow manual runs
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install requests
-        run: pip install requests
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
 
       - name: Run scraper
         run: python scrape_instagram.py
