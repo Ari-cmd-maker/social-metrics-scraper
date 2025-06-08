@@ -1,0 +1,23 @@
+name: Daily IG Scrape
+
+on:
+  schedule:
+    - cron:  '0 6 * * *'   # every day at 06:00 UTC
+  workflow_dispatch:      # also allow manual runs
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Run scraper
+        run: python scrape_instagram.py
