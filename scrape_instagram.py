@@ -1,28 +1,27 @@
 import requests, re, json, sys
 from datetime import datetime
 
-# ← your values:
 USERNAME       = "dreamyroni"
-ZAPIER_WEBHOOK = "https://hooks.zapier.com/hooks/catch/23268473/uyu9h40/"
+ZAPIER_WEBHOOK = "https://hooks.zapier.com/hooks/catch/123456/abcdef"
 
 def fetch_followers(username):
-    url = f"https://www.instagram.com/{username}/"
-    print(f"[DEBUG] GET {url}")
+    url  = f"https://www.instagram.com/{username}/"
     resp = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
     resp.raise_for_status()
     html = resp.text
 
-    # Extract the JSON blob from window._sharedData
-    m = re.search(r"window\._sharedData = (.+?);</script>", html)
+    # Try to pull the JSON from window.__additionalDataLoaded(...)
+    m = re.search(
+        r"window\.__additionalDataLoaded\('/" + re.escape(username) + r"/',\s*({.+?})\);",
+        html
+    )
     if not m:
-        raise ValueError("Could not find sharedData JSON in page")
-    shared_data = json.loads(m.group(1))
+        raise ValueError("Couldn't extract __additionalDataLoaded JSON")
+    data = json.loads(m.group(1))
 
-    # Drill into the structure to get follower count
-    user = shared_data["entry_data"]["ProfilePage"][0]["graphql"]["user"]
-    count = user["edge_followed_by"]["count"]
-    print(f"[DEBUG] followers = {count}")
-    return count
+    # Navigate to the user object
+    user = data["graphql"]["user"]
+    return user["edge_followed_by"]["count"]
 
 def main():
     try:
@@ -33,12 +32,12 @@ def main():
             "identifier": USERNAME,
             "followers":  cnt
         }
-        print(f"[DEBUG] posting to Zapier: {payload}")
+        print(f"[DEBUG] Posting to Zapier: {payload}")
         r = requests.post(ZAPIER_WEBHOOK, json=payload)
-        print(f"[DEBUG] Zapier responded {r.status_code}: {r.text}")
+        print(f"[DEBUG] Zapier replied {r.status_code}: {r.text}")
         r.raise_for_status()
     except Exception as e:
-        print(f"[ERROR] {e}", file=sys.stderr)
+        print("[ERROR]", e, file=sys.stderr)
         sys.exit(1)
 
 if __name__=="__main__":
