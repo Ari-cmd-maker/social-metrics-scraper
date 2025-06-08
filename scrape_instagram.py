@@ -1,22 +1,22 @@
 import requests, json, sys
 from datetime import datetime
+from bs4 import BeautifulSoup
 
 USERNAME       = "dreamyroni"
 ZAPIER_WEBHOOK = "https://hooks.zapier.com/hooks/catch/123456/abcdef"
 
 def fetch_followers(username):
-    url = f"https://i.instagram.com/api/v1/users/web_profile_info/?username={username}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) "
-                      "AppleWebKit/605.1.15 (KHTML, like Gecko) "
-                      "Version/14.0 Mobile/15A372 Safari/604.1",
-        "x-ig-app-id": "936619743392459",
-    }
-    resp = requests.get(url, headers=headers)
+    url  = f"https://www.instagram.com/{username}/"
+    print(f"[DEBUG] GET {url}")
+    resp = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
     resp.raise_for_status()
-    data = resp.json()
-    user = data["data"]["user"]
-    return user["edge_followed_by"]["count"]
+    soup    = BeautifulSoup(resp.text, "html.parser")
+    tag     = soup.find("meta", property="og:description")
+    if not tag or not tag.get("content"):
+        raise ValueError("Could not find og:description meta")
+    content = tag["content"]
+    followers_str = content.split(" Followers")[0]
+    return int(followers_str.replace(",", "").strip())
 
 def main():
     try:
