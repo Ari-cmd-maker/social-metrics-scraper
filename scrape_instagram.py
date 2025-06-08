@@ -1,26 +1,21 @@
-import requests, re, json, sys
+import requests, json, sys
 from datetime import datetime
 
 USERNAME       = "dreamyroni"
 ZAPIER_WEBHOOK = "https://hooks.zapier.com/hooks/catch/123456/abcdef"
 
 def fetch_followers(username):
-    url  = f"https://www.instagram.com/{username}/"
-    resp = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
+    url = f"https://i.instagram.com/api/v1/users/web_profile_info/?username={username}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) "
+                      "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+                      "Version/14.0 Mobile/15A372 Safari/604.1",
+        "x-ig-app-id": "936619743392459",
+    }
+    resp = requests.get(url, headers=headers)
     resp.raise_for_status()
-    html = resp.text
-
-    # Try to pull the JSON from window.__additionalDataLoaded(...)
-    m = re.search(
-        r"window\.__additionalDataLoaded\('/" + re.escape(username) + r"/',\s*({.+?})\);",
-        html
-    )
-    if not m:
-        raise ValueError("Couldn't extract __additionalDataLoaded JSON")
-    data = json.loads(m.group(1))
-
-    # Navigate to the user object
-    user = data["graphql"]["user"]
+    data = resp.json()
+    user = data["data"]["user"]
     return user["edge_followed_by"]["count"]
 
 def main():
